@@ -5,7 +5,6 @@
 # See COPYING for more details
 
 require 'railroad/app_diagram'
-require 'ruby-debug'
 
 # RailRoad models diagram
 class ModelsDiagram < AppDiagram
