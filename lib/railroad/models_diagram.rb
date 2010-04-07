@@ -5,6 +5,7 @@
 # See COPYING for more details
 
 require 'railroad/app_diagram'
+require 'ruby-debug'
 
 # RailRoad models diagram
 class ModelsDiagram < AppDiagram
@@ -23,6 +24,9 @@ class ModelsDiagram < AppDiagram
     files = Dir.glob("app/models/**/*.rb")
     files += Dir.glob("vendor/plugins/**/app/models/*.rb") if @options.plugins_models    
     files -= @options.exclude
+
+    @included_models = files.map { |file| extract_class_name(file).constantize.name }
+
     files.each do |f| 
       process_class extract_class_name(f).constantize
     end
@@ -145,11 +149,16 @@ class ModelsDiagram < AppDiagram
     else # habtm or has_many, :through
       return if @habtm.include? [assoc.class_name, class_name, assoc_name]
       assoc_type = 'many-many'
-      @habtm << [class_name, assoc.class_name, assoc_name]
+      @habtm << [class_name, assoc.class_name, assoc_name] if included_model?(assoc.class_name)
     end  
     # from patch #12384    
     # @graph.add_edge [assoc_type, class_name, assoc.class_name, assoc_name]
-    @graph.add_edge [assoc_type, class_name, assoc_class_name, assoc_name]    
+
+    @graph.add_edge [assoc_type, class_name, assoc_class_name, assoc_name] if included_model?(assoc_class_name)
   end # process_association
+
+  def included_model?(name)
+    @included_models.include?(name)
+  end
 
 end # class ModelsDiagram
